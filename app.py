@@ -15,7 +15,9 @@ class App(tk.Frame):
         super().__init__(master)
         master.config(bg=bg_c)
         self.create_widgets()
-
+        master.update()
+        self.create_Spring()
+        print(self.middle_of_canvas())
 
 
     def create_widgets(self):
@@ -34,12 +36,10 @@ class App(tk.Frame):
             anchor='ne'
         )
 
-        self.Canvas.bind( "<Button-1>", self.B1_pressed)
-        self.Canvas.bind( "<B1-Motion>", self.B1_moved)
+        self.Canvas.bind( "<Button-1>", self.pressed)
+        self.Canvas.bind( "<B1-Motion>", self.pressed)
+        self.Canvas.bind( "<ButtonRelease-1>", self.released)
 
-
-        middle = self.middle_of_canvas()
-        self.SpringID = self.Canvas.create_line(middle.x,middle.y, middle.x+50, middle.y+50)
         # Matplotlib figure
 
          # prepare data
@@ -71,21 +71,29 @@ class App(tk.Frame):
             anchor = 'ne'
         )
 
+    
+    def create_Spring(self):
+        p_middle = self.middle_of_canvas()
+        length = 100
+        p_rest = phy.vector2d(p_middle.x+int(length), (p_middle.y))
+        v_spring = p_rest-p_middle
+        self.Spring = phy.Spring(v_spring)
+        self.Spring.draw(self.Canvas,p_middle, p_rest)
+        print(self.Spring.F)
 ##### 
-    def B1_pressed(self,event):
-        p_mouse = phy.vector2d(int(self.Canvas.canvasx(event.x)), int(self.Canvas.canvasx(event.y)))
+
+    def pressed(self,event):
+        p_mouse = phy.vector2d(int(self.Canvas.canvasx(event.x)), -int(self.Canvas.canvasx(event.y)))
         p_middle = self.middle_of_canvas()
         v_spring = p_mouse - p_middle
-        if self.SpringID == None:
-            self.SpringID = self.Canvas.create_line(p_middle.x,p_middle.y,p_mouse.x,p_mouse.y)
-        else:
-            self.Canvas.coords(self.SpringID,p_middle.x,p_middle.y,p_mouse.x,p_mouse.y)
-        
-    def B1_moved(self,event):
-        p_mouse = phy.vector2d(int(self.Canvas.canvasx(event.x)), int(self.Canvas.canvasx(event.y)))
-        p_middle = self.middle_of_canvas()
-        self.Canvas.coords(self.SpringID,p_middle.x,p_middle.y,p_mouse.x,p_mouse.y)
+        force = self.Spring.force(v_spring)
+        self.Spring.draw(self.Canvas,p_middle,p_mouse)
+        return force, p_mouse
 
+    def released(self,event): 
+        force, p_mouse = self.pressed(event)
+        print(force)
+        force.draw(self.Canvas, p_mouse)
 #### Helpers #####
 
     def middle_of_canvas(self):
@@ -93,7 +101,8 @@ class App(tk.Frame):
         screen_height = self.master.winfo_height()   
         middle_x = int(screen_width * 0.5 * 0.5)
         middle_y = int(screen_height * 0.9 * 0.5)  
-        return phy.vector2d(middle_x,middle_y)
+        return phy.vector2d(middle_x,-middle_y)
+
 #### MAIN ####
 
 root = tk.Tk()
