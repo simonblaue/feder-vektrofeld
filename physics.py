@@ -68,8 +68,7 @@ class Spring():
 
     def potential(self, v):
         s = self.excursion(v)
-        k = vector2d(1/2*self.k,1/2 * self.k)
-        return k * s * s
+        return 1/2 * self.k * s * s
 
 
     def draw(self,Canvas, origin, end):
